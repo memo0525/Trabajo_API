@@ -298,7 +298,7 @@
 
     async function eliminarUsuario(id) {
       playSound();
-      if (confirm("¿Eliminar este usuario?")) {
+      if (confirm("¿ Seguro quiere Eliminar este usuario?")) {
         const res = await fetch(`${API_URL}/${id}`, {
           method: "DELETE"
         });
