@@ -157,6 +157,64 @@
       top: 10px;
       right: 10px;
     }
+    body.claro {
+  background: radial-gradient(circle, #ffffff, #e0e0e0, #cfcfcf);
+  color: #222;
+}
+
+body.claro header {
+  color: #2a00ff;
+  text-shadow: 0 0 10px #2a00ff88;
+}
+
+body.claro .modo-btn {
+  background: #0057ff;
+  box-shadow: 0 0 15px #0057ff;
+}
+
+body.claro .formulario {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 20px #0057ff;
+}
+
+body.claro .formulario input {
+  background: #f0f0f0;
+  color: #0057ff;
+  box-shadow: inset 0 0 8px #0057ff88;
+}
+
+body.claro .formulario button {
+  background: #0057ff;
+  color: white;
+  box-shadow: 0 0 20px #0057ff, 0 0 40px #0057ff66;
+}
+
+body.claro .tarjeta {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 15px #0057ff;
+}
+
+body.claro .tarjeta h3 {
+  color: #006400;
+  text-shadow: 0 0 10px #00aa0077;
+}
+
+body.claro .tarjeta p {
+  color: #333;
+}
+
+body.claro .acciones button:hover {
+  color: #0057ff;
+  text-shadow: 0 0 10px #0057ff;
+}
+
+body.claro .info-footer {
+  background: rgba(255, 255, 255, 0.8);
+  color: #0057ff;
+  box-shadow: 0 0 10px #0057ff;
+  text-shadow: 0 0 5px #0057ff77;
+}
+
 
     .acciones button {
       background: none;
@@ -200,6 +258,7 @@
   <div id="particles-js"></div>
 
   <button class="modo-btn" onclick="toggleModo()">🌗 Modo</button>
+  
 
   <header><span class="typing">🔥 CRUD USUARIOS🔥</span></header>
 
@@ -310,6 +369,9 @@
         }
       }
     }
+function toggleModo() {
+  document.body.classList.toggle('claro');
+}
 
     function limpiarFormulario() {
       usuarioEditandoId = null;
