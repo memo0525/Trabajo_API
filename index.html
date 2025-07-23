@@ -5,6 +5,8 @@
   <title>CRUD Increíble</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -258,7 +260,8 @@ body.claro .info-footer {
   <div id="particles-js"></div>
 
   <button class="modo-btn" onclick="toggleModo()">🌗 Modo</button>
-  
+  <button onclick="exportarCSV()">📤 Exportar CSV</button>
+  <button onclick="exportarPDF()">📄 Exportar PDF</button>
 
   <header><span class="typing">🔥 CRUD USUARIOS🔥</span></header>
 
@@ -270,6 +273,7 @@ body.claro .info-footer {
       <input type="text" id="celular" placeholder="Celular"><br>
       <input type="text" id="cedula" placeholder="Cédula"><br>
       <button onclick="agregarOActualizarUsuario()">💾 Guardar Usuario</button>
+      <input type="file" id="archivoCSV" accept=".csv" onchange="importarCSV()">
     </div>
 
     <div class="tarjetas" id="contenedorUsuarios">
@@ -293,6 +297,71 @@ body.claro .info-footer {
       clickSound.currentTime = 0;
       clickSound.play();
     }
+function exportarCSV() {
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(usuarios => {
+      const filas = [
+        ["Nombre", "Apellido", "Email", "Celular", "Cédula"], // Encabezados
+        ...usuarios.map(u => [u.nombre, u.apellido, u.email, u.celular, u.cedula])
+      ];
+
+      const csv = filas.map(fila => fila.map(dato => `"${dato}"`).join(",")).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = "usuarios.csv";
+      enlace.click();
+
+      URL.revokeObjectURL(url);
+    });
+}
+async function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const res = await fetch(API_URL);
+  const usuarios = await res.json();
+
+  doc.setFontSize(14);
+  doc.text("Lista de Usuarios", 20, 20);
+
+  let y = 30;
+  usuarios.forEach(u => {
+    doc.text(`• ${u.nombre} ${u.apellido} - ${u.email}`, 20, y);
+    y += 10;
+  });
+
+  doc.save("usuarios.pdf");
+}
+function importarCSV() {
+  const archivo = document.getElementById("archivoCSV").files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+  lector.onload = async function (e) {
+    const texto = e.target.result;
+    const lineas = texto.split("\n").slice(1); // Salta encabezados
+    for (let linea of lineas) {
+      const [nombre, apellido, email, celular, cedula] = linea.split(",");
+      if (!nombre || !apellido) continue;
+
+      const usuario = { nombre, apellido, email, celular, cedula };
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(usuario)
+      });
+    }
+
+    alert("✅ Usuarios importados");
+    cargarUsuarios();
+  };
+  lector.readAsText(archivo);
+}
 
     async function cargarUsuarios() {
       const res = await fetch(API_URL);
