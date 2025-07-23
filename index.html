@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD Increíble</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100%;
+      background: radial-gradient(circle, #0f0c29, #302b63, #24243e);
+      color: white;
+      overflow-x: hidden;
+    }
+
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    header {
+      padding: 40px 20px 20px;
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #00f2fe;
+      text-shadow: 0 0 20px #00f2fe;
+    }
+
+    .typing {
+      display: inline-block;
+      border-right: 2px solid #00f2fe;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: typing 4s steps(30), blink 0.7s infinite;
+      max-width: 100%;
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent }
+    }
+
+    .modo-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #a200ff;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 0 15px #a200ff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .formulario {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 25px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 20px #00f2fe;
+      animation: aparecer 1s ease-out;
+    }
+
+    .formulario input {
+      width: calc(48% - 10px);
+      padding: 12px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 10px;
+      background: #1f1f1f;
+      color: #00f2fe;
+      box-shadow: inset 0 0 8px #00f2fe88;
+    }
+
+    .formulario button {
+      margin-top: 10px;
+      background: #00f2fe;
+      border: none;
+      padding: 12px 25px;
+      color: #000;
+      font-size: 1em;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00f2fe, 0 0 40px #00f2fe66;
+      transition: 0.3s;
+    }
+
+    .formulario button:hover {
+      transform: scale(1.05);
+      background: #0ff;
+    }
+
+    .tarjetas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 20px;
+    }
+
+    .tarjeta {
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 15px #a200ff;
+      position: relative;
+      animation: aparecer 0.7s ease-in-out;
+      transition: transform 0.3s;
+    }
+
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .tarjeta:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 0 30px #a200ff, 0 0 60px #a200ff55;
+    }
+
+    .tarjeta h3 {
+      color: #39ff14;
+      text-shadow: 0 0 10px #39ff14aa;
+    }
+
+    .tarjeta p {
+      margin: 5px 0;
+      color: #ddd;
+    }
+
+    .acciones {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .acciones button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2em;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    .acciones button:hover {
+      color: #00f2fe;
+      text-shadow: 0 0 10px #00f2fe;
+    }
+
+    @media (max-width: 600px) {
+      .formulario input {
+        width: 100%;
+        margin: 8px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="particles-js"></div>
+
+  <button class="modo-btn" onclick="toggleModo()">🌗 Modo</button>
+
+  <header><span class="typing">🔥 CRUD Neón con Partículas, Sonido y más 🔥</span></header>
+
+  <div class="container">
+    <div class="formulario">
+      <input type="text" id="nombre" placeholder="Nombre">
+      <input type="text" id="apellido" placeholder="Apellido"><br>
+      <input type="email" id="email" placeholder="Email">
+      <input type="text" id="celular" placeholder="Celular"><br>
+      <input type="text" id="cedula" placeholder="Cédula"><br>
+      <button onclick="agregarOActualizarUsuario()">💾 Guardar Usuario</button>
+    </div>
+
+    <div class="tarjetas" id="contenedorUsuarios">
+      <!-- Tarjetas aquí -->
+    </div>
+  </div>
+
+  <!-- Sonido -->
+  <audio id="clickSound" src="https://assets.mixkit.co/sfx/download/mixkit-select-click-1109.mp3"></audio>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api/usuarios';
+    let usuarioEditandoId = null;
+    const clickSound = document.getElementById('clickSound');
+
+    function toggleModo() {
+      document.body.classList.toggle('claro');
+    }
+
+    function playSound() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+
+    async function cargarUsuarios() {
+      const res = await fetch(API_URL);
+      const usuarios = await res.json();
+      const contenedor = document.getElementById("contenedorUsuarios");
+      contenedor.innerHTML = '';
+
+      usuarios.forEach(u => {
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjeta";
+        tarjeta.innerHTML = `
+          <div class="acciones">
+            <button onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.apellido}', '${u.email}', '${u.celular}', '${u.cedula}')"><i class="fas fa-edit"></i></button>
+            <button onclick="eliminarUsuario(${u.id})"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          <h3>${u.nombre} ${u.apellido}</h3>
+          <p><strong>Email:</strong> ${u.email}</p>
+          <p><strong>Celular:</strong> ${u.celular}</p>
+          <p><strong>Cédula:</strong> ${u.cedula}</p>
+        `;
+        contenedor.appendChild(tarjeta);
+      });
+    }
+
+    async function agregarOActualizarUsuario() {
+      playSound();
+      const usuario = {
+        nombre: document.getElementById("nombre").value,
+        apellido: document.getElementById("apellido").value,
+        email: document.getElementById("email").value,
+        celular: document.getElementById("celular").value,
+        cedula: document.getElementById("cedula").value
+      };
+
+      const url = usuarioEditandoId ? `${API_URL}/${usuarioEditandoId}` : API_URL;
+      const method = usuarioEditandoId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(usuario)
+      });
+
+      if (res.ok) {
+        alert(usuarioEditandoId ? "✅ Usuario actualizado" : "✅ Usuario agregado");
+        limpiarFormulario();
+        cargarUsuarios();
+      } else {
+        alert("❌ Error");
+      }
+    }
+
+    function editarUsuario(id, nombre, apellido, email, celular, cedula) {
+      playSound();
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("apellido").value = apellido;
+      document.getElementById("email").value = email;
+      document.getElementById("celular").value = celular;
+      document.getElementById("cedula").value = cedula;
+      usuarioEditandoId = id;
+    }
+
+    async function eliminarUsuario(id) {
+      playSound();
+      if (confirm("¿Eliminar este usuario?")) {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE"
+        });
+        if (res.ok) {
+          alert("🗑️ Usuario eliminado");
+          cargarUsuarios();
+        } else {
+          alert("❌ Error al eliminar");
+        }
+      }
+    }
+
+    function limpiarFormulario() {
+      usuarioEditandoId = null;
+      document.getElementById("nombre").value = "";
+      document.getElementById("apellido").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("celular").value = "";
+      document.getElementById("cedula").value = "";
+    }
+
+    cargarUsuarios();
+
+    // Configurar partículas
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 100 },
+        color: { value: "#00f2fe" },
+        shape: { type: "circle" },
+        opacity: { value: 0.5 },
+        size: { value: 3 },
+        move: { enable: true, speed: 1 }
+      }
+    });
+  </script>
+
+</body>
+</html>
