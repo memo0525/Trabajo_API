@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>CRUD Usuarios</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(-45deg, #2c3e50, #3498db, #27ae60, #34495e);
+      background-size: 400% 400%;
+      animation: gradientMove 20s ease infinite;
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientMove {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    h1 {
+      color: #ecf0f1;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    .form-container {
+      background: rgba(44, 62, 80, 0.9);
+      padding: 25px 35px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      margin-bottom: 30px;
+      width: 90%;
+      max-width: 900px;
+    }
+
+    .form-container input {
+      padding: 14px;
+      margin: 12px 12px 12px 0;
+      border: 2px solid #2980b9;
+      border-radius: 10px;
+      width: calc(33% - 18px);
+      font-size: 16px;
+      background-color: #34495e;
+      color: #ecf0f1;
+    }
+
+    .form-container input::placeholder {
+      color: #bdc3c7;
+    }
+
+    #submitBtn {
+      background-color: #1abc9c;
+      color: white;
+      padding: 14px 42px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    #cancelBtn {
+      background-color: #7f8c8d;
+      color: white;
+      border: none;
+      padding: 14px 42px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-left: 18px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 900px;
+      background: rgba(44, 62, 80, 0.9);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #2980b9;
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 15px;
+      color: #ecf0f1;
+    }
+
+    th {
+      background-color: #1abc9c;
+      color: #1c2833;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-right: 12px;
+      font-weight: 600;
+    }
+
+    .edit-btn {
+      background-color: #f39c12;
+      color: black;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    @media (max-width: 700px) {
+      .form-container input {
+        width: 100%;
+        margin-bottom: 14px;
+      }
+
+      table {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>CRUD Usuarios</h1>
+
+  <div class="form-container">
+    <h3 id="formTitle">Agregar Usuario</h3>
+    <input type="hidden" id="userId" />
+    <input type="text" id="nombre" placeholder="Nombre" />
+    <input type="text" id="apellido" placeholder="Apellido" />
+    <input type="text" id="email" placeholder="Email" />
+    <input type="text" id="celular" placeholder="Celular" />
+    <input type="text" id="cedula" placeholder="Cédula" />
+    <button id="submitBtn" onclick="agregarOActualizarUsuario()">Agregar</button>
+    <button id="cancelBtn" onclick="cancelarEdicion()">Cancelar</button>
+  </div>
+
+  <h3>Lista de Usuarios</h3>
+  <table id="usuariosTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Email</th>
+        <th>Celular</th>
+        <th>Cédula</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const apiUrl = 'http://localhost:3000/api/usuarios';
+
+    async function cargarUsuarios() {
+      try {
+        console.log('Enviando solicitud GET...');
+        const res = await fetch(apiUrl);
+        const usuarios = await res.json();
+        console.log('Usuarios recibidos:', usuarios);
+
+        const tabla = document.querySelector('#usuariosTable tbody');
+        tabla.innerHTML = '';
+        usuarios.forEach(u => {
+          tabla.innerHTML += `
+            <tr>
+              <td>${u.id}</td>
+              <td>${u.nombre}</td>
+              <td>${u.apellido || ''}</td>
+              <td>${u.email}</td>
+              <td>${u.celular || ''}</td>
+              <td>${u.cedula || ''}</td>
+              <td>
+                <button class="edit-btn" onclick="editarUsuario(${u.id})">Editar</button>
+                <button class="delete-btn" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error('Error al cargar usuarios:', err);
+      }
+    }
+
+    async function agregarOActualizarUsuario() {
+      const id = document.getElementById('userId').value;
+      const nombre = document.getElementById('nombre').value.trim();
+      const apellido = document.getElementById('apellido').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const celular = document.getElementById('celular').value.trim();
+      const cedula = document.getElementById('cedula').value.trim();
+
+      if (!nombre || !email) {
+        alert('Nombre y Email son obligatorios');
+        return;
+      }
+
+      const data = { nombre, apellido, email, celular, cedula };
+
+      try {
+        let res;
+        if (id) {
+          console.log(`Enviando PUT para ID ${id}:`, data);
+          res = await fetch(`${apiUrl}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+        } else {
+          console.log('Enviando POST:', data);
+          res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+        }
+
+        const respuesta = await res.json();
+        console.log('Respuesta de la API:', respuesta);
+        cancelarEdicion();
+        cargarUsuarios();
+      } catch (error) {
+        console.error('Error en envío:', error);
+      }
+    }
+
+    function editarUsuario(id) {
+      fetch(`${apiUrl}/${id}`)
+        .then(res => res.json())
+        .then(usuario => {
+          console.log('Editando usuario:', usuario);
+          document.getElementById('userId').value = usuario.id;
+          document.getElementById('nombre').value = usuario.nombre;
+          document.getElementById('apellido').value = usuario.apellido;
+          document.getElementById('email').value = usuario.email;
+          document.getElementById('celular').value = usuario.celular;
+          document.getElementById('cedula').value = usuario.cedula;
+          document.getElementById('submitBtn').textContent = 'Actualizar';
+          document.getElementById('formTitle').textContent = 'Editar Usuario';
+          document.getElementById('cancelBtn').style.display = 'inline-block';
+        })
+        .catch(error => {
+          console.error('Error al obtener usuario:', error);
+        });
+    }
+
+    function eliminarUsuario(id) {
+      if (!confirm('¿Deseas eliminar este usuario?')) return;
+
+      fetch(`${apiUrl}/${id}`, {
+        method: 'DELETE',
+      })
+        .then(res => res.json())
+        .then(respuesta => {
+          console.log('Usuario eliminado:', respuesta);
+          cargarUsuarios();
+        })
+        .catch(error => {
+          console.error('Error al eliminar usuario:', error);
+        });
+    }
+
+    function cancelarEdicion() {
+      document.getElementById('userId').value = '';
+      document.getElementById('nombre').value = '';
+      document.getElementById('apellido').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('celular').value = '';
+      document.getElementById('cedula').value = '';
+      document.getElementById('submitBtn').textContent = 'Agregar';
+      document.getElementById('formTitle').textContent = 'Agregar Usuario';
+      document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    cargarUsuarios();
+  </script>
+</body>
+</html>
