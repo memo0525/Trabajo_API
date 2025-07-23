@@ -260,7 +260,6 @@ body.claro .info-footer {
   <div id="particles-js"></div>
 
   <button class="modo-btn" onclick="toggleModo()">🌗 Modo</button>
-  <button onclick="exportarCSV()">📤 Exportar CSV</button>
   <button onclick="exportarPDF()">📄 Exportar PDF</button>
 
   <header><span class="typing">🔥 CRUD USUARIOS🔥</span></header>
@@ -273,7 +272,6 @@ body.claro .info-footer {
       <input type="text" id="celular" placeholder="Celular"><br>
       <input type="text" id="cedula" placeholder="Cédula"><br>
       <button onclick="agregarOActualizarUsuario()">💾 Guardar Usuario</button>
-      <input type="file" id="archivoCSV" accept=".csv" onchange="importarCSV()">
     </div>
 
     <div class="tarjetas" id="contenedorUsuarios">
@@ -285,186 +283,160 @@ body.claro .info-footer {
   <audio id="clickSound" src="https://assets.mixkit.co/sfx/download/mixkit-select-click-1109.mp3"></audio>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/usuarios';
-    let usuarioEditandoId = null;
-    const clickSound = document.getElementById('clickSound');
+  const API_URL = 'http://localhost:3000/api/usuarios';
+  let usuarioEditandoId = null;
+  const clickSound = document.getElementById('clickSound');
 
-    function toggleModo() {
-      document.body.classList.toggle('claro');
-    }
+  function toggleModo() {
+    document.body.classList.toggle('claro');
+  }
 
-    function playSound() {
-      clickSound.currentTime = 0;
-      clickSound.play();
-    }
-function exportarCSV() {
-  fetch(API_URL)
-    .then(res => res.json())
-    .then(usuarios => {
-      const filas = [
-        ["Nombre", "Apellido", "Email", "Celular", "Cédula"], // Encabezados
-        ...usuarios.map(u => [u.nombre, u.apellido, u.email, u.celular, u.cedula])
-      ];
+  function playSound() {
+    clickSound.currentTime = 0;
+    clickSound.play();
+  }
 
-      const csv = filas.map(fila => fila.map(dato => `"${dato}"`).join(",")).join("\n");
+  async function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
+    const res = await fetch(API_URL);
+    const usuarios = await res.json();
 
-      const enlace = document.createElement("a");
-      enlace.href = url;
-      enlace.download = "usuarios.csv";
-      enlace.click();
+    doc.setFontSize(14);
+    doc.text("Lista de Usuarios", 20, 20);
 
-      URL.revokeObjectURL(url);
+    let y = 30;
+    usuarios.forEach(u => {
+      doc.text(`• ${u.nombre} ${u.apellido} - ${u.email}`, 20, y);
+      y += 10;
     });
-}
-async function exportarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
 
-  const res = await fetch(API_URL);
-  const usuarios = await res.json();
+    doc.save("usuarios.pdf");
+  }
 
-  doc.setFontSize(14);
-  doc.text("Lista de Usuarios", 20, 20);
+  async function cargarUsuarios() {
+    const res = await fetch(API_URL);
+    const usuarios = await res.json();
+    const contenedor = document.getElementById("contenedorUsuarios");
+    contenedor.innerHTML = '';
 
-  let y = 30;
-  usuarios.forEach(u => {
-    doc.text(`• ${u.nombre} ${u.apellido} - ${u.email}`, 20, y);
-    y += 10;
-  });
+    usuarios.forEach(u => {
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjeta";
+      tarjeta.innerHTML = `
+        <div class="acciones">
+          <button onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.apellido}', '${u.email}', '${u.celular}', '${u.cedula}')"><i class="fas fa-edit"></i></button>
+          <button onclick="eliminarUsuario(${u.id})"><i class="fas fa-trash-alt"></i></button>
+          <button onclick="imprimirUsuario('${u.nombre}', '${u.apellido}', '${u.email}', '${u.celular}', '${u.cedula}')"><i class="fas fa-print"></i></button>
+        </div>
+        <h3>${u.nombre} ${u.apellido}</h3>
+        <p><strong>Email:</strong> ${u.email}</p>
+        <p><strong>Celular:</strong> ${u.celular}</p>
+        <p><strong>Cédula:</strong> ${u.cedula}</p>
+      `;
+      contenedor.appendChild(tarjeta);
+    });
+  }
 
-  doc.save("usuarios.pdf");
-}
-function importarCSV() {
-  const archivo = document.getElementById("archivoCSV").files[0];
-  if (!archivo) return;
+  async function agregarOActualizarUsuario() {
+    playSound();
+    const usuario = {
+      nombre: document.getElementById("nombre").value,
+      apellido: document.getElementById("apellido").value,
+      email: document.getElementById("email").value,
+      celular: document.getElementById("celular").value,
+      cedula: document.getElementById("cedula").value
+    };
 
-  const lector = new FileReader();
-  lector.onload = async function (e) {
-    const texto = e.target.result;
-    const lineas = texto.split("\n").slice(1); // Salta encabezados
-    for (let linea of lineas) {
-      const [nombre, apellido, email, celular, cedula] = linea.split(",");
-      if (!nombre || !apellido) continue;
+    const url = usuarioEditandoId ? `${API_URL}/${usuarioEditandoId}` : API_URL;
+    const method = usuarioEditandoId ? "PUT" : "POST";
 
-      const usuario = { nombre, apellido, email, celular, cedula };
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usuario)
-      });
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(usuario)
+    });
+
+    if (res.ok) {
+      alert(usuarioEditandoId ? "✅ Usuario actualizado" : "✅ Usuario agregado");
+      limpiarFormulario();
+      cargarUsuarios();
+    } else {
+      alert("❌ Error");
     }
+  }
 
-    alert("✅ Usuarios importados");
-    cargarUsuarios();
-  };
-  lector.readAsText(archivo);
-}
+  function editarUsuario(id, nombre, apellido, email, celular, cedula) {
+    playSound();
+    document.getElementById("nombre").value = nombre;
+    document.getElementById("apellido").value = apellido;
+    document.getElementById("email").value = email;
+    document.getElementById("celular").value = celular;
+    document.getElementById("cedula").value = cedula;
+    usuarioEditandoId = id;
+  }
 
-    async function cargarUsuarios() {
-      const res = await fetch(API_URL);
-      const usuarios = await res.json();
-      const contenedor = document.getElementById("contenedorUsuarios");
-      contenedor.innerHTML = '';
-
-      usuarios.forEach(u => {
-        const tarjeta = document.createElement("div");
-        tarjeta.className = "tarjeta";
-        tarjeta.innerHTML = `
-          <div class="acciones">
-            <button onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.apellido}', '${u.email}', '${u.celular}', '${u.cedula}')"><i class="fas fa-edit"></i></button>
-            <button onclick="eliminarUsuario(${u.id})"><i class="fas fa-trash-alt"></i></button>
-          </div>
-          <h3>${u.nombre} ${u.apellido}</h3>
-          <p><strong>Email:</strong> ${u.email}</p>
-          <p><strong>Celular:</strong> ${u.celular}</p>
-          <p><strong>Cédula:</strong> ${u.cedula}</p>
-        `;
-        contenedor.appendChild(tarjeta);
+  async function eliminarUsuario(id) {
+    playSound();
+    if (confirm("¿Seguro quiere eliminar este usuario?")) {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
       });
-    }
-
-    async function agregarOActualizarUsuario() {
-      playSound();
-      const usuario = {
-        nombre: document.getElementById("nombre").value,
-        apellido: document.getElementById("apellido").value,
-        email: document.getElementById("email").value,
-        celular: document.getElementById("celular").value,
-        cedula: document.getElementById("cedula").value
-      };
-
-      const url = usuarioEditandoId ? `${API_URL}/${usuarioEditandoId}` : API_URL;
-      const method = usuarioEditandoId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usuario)
-      });
-
       if (res.ok) {
-        alert(usuarioEditandoId ? "✅ Usuario actualizado" : "✅ Usuario agregado");
-        limpiarFormulario();
+        alert("🗑️ Usuario eliminado");
         cargarUsuarios();
       } else {
-        alert("❌ Errorr");
+        alert("❌ Error al eliminar");
       }
     }
+  }
 
-    function editarUsuario(id, nombre, apellido, email, celular, cedula) {
-      playSound();
-      document.getElementById("nombre").value = nombre;
-      document.getElementById("apellido").value = apellido;
-      document.getElementById("email").value = email;
-      document.getElementById("celular").value = celular;
-      document.getElementById("cedula").value = cedula;
-      usuarioEditandoId = id;
+  function imprimirUsuario(nombre, apellido, email, celular, cedula) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("🧾 Ficha del Usuario", 20, 20);
+
+    doc.setFontSize(12);
+    let y = 40;
+
+    doc.text(`Nombre: ${nombre}`, 20, y);
+    y += 10;
+    doc.text(`Apellido: ${apellido}`, 20, y);
+    y += 10;
+    doc.text(`Email: ${email}`, 20, y);
+    y += 10;
+    doc.text(`Celular: ${celular}`, 20, y);
+    y += 10;
+    doc.text(`Cédula: ${cedula}`, 20, y);
+
+    doc.save(`Usuario_${nombre}_${apellido}.pdf`);
+  }
+
+  function limpiarFormulario() {
+    usuarioEditandoId = null;
+    document.getElementById("nombre").value = "";
+    document.getElementById("apellido").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("celular").value = "";
+    document.getElementById("cedula").value = "";
+  }
+
+  cargarUsuarios();
+
+  particlesJS("particles-js", {
+    particles: {
+      number: { value: 100 },
+      color: { value: "#00f2fe" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: 3 },
+      move: { enable: true, speed: 1 }
     }
-
-    async function eliminarUsuario(id) {
-      playSound();
-      if (confirm("¿ Seguro quiere Eliminar este usuario?")) {
-        const res = await fetch(`${API_URL}/${id}`, {
-          method: "DELETE"
-        });
-        if (res.ok) {
-          alert("🗑️ Este Usuario eliminado");
-          cargarUsuarios();
-        } else {
-          alert("❌ Error al eliminar");
-        }
-      }
-    }
-function toggleModo() {
-  document.body.classList.toggle('claro');
-}
-
-    function limpiarFormulario() {
-      usuarioEditandoId = null;
-      document.getElementById("nombre").value = "";
-      document.getElementById("apellido").value = "";
-      document.getElementById("email").value = "";
-      document.getElementById("celular").value = "";
-      document.getElementById("cedula").value = "";
-    }
-
-    cargarUsuarios();
-
-    // Configurar partículas
-    particlesJS("particles-js", {
-      particles: {
-        number: { value: 100 },
-        color: { value: "#00f2fe" },
-        shape: { type: "circle" },
-        opacity: { value: 0.5 },
-        size: { value: 3 },
-        move: { enable: true, speed: 1 }
-      }
-    });
-  </script>
+  });
+</script>
 
 </body>
 <footer class="info-footer">
